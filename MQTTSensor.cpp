@@ -1,21 +1,31 @@
 #include "MQTTSensor.h"
 #include <Arduino.h>
 
+MQTTIntegerSensor::MQTTIntegerSensor(const char* sensorTopic, IntegerUpdateFunction updateFunction, uint32_t updatePeriod) {
+  init(sensorTopic, updateFunction);
+  setUpdatePeriod(updatePeriod);
+}
+
 MQTTIntegerSensor::MQTTIntegerSensor(PubSubClient& client, const char* sensorTopic, IntegerUpdateFunction updateFunction) {
-  init(client, sensorTopic, updateFunction);
+  init(sensorTopic, updateFunction);
+  setMqttClient(client);
 }
 
 MQTTIntegerSensor::MQTTIntegerSensor(PubSubClient& client, const char* sensorTopic, IntegerUpdateFunction updateFunction, uint32_t updatePeriod) {
-  init(client, sensorTopic, updateFunction);
+  init(sensorTopic, updateFunction);
+  setMqttClient(client);
   setUpdatePeriod(updatePeriod);
+}
+
+void MQTTIntegerSensor::setMqttClient(PubSubClient& client) {
+  this->client = &client;
 }
 
 void MQTTIntegerSensor::setUpdatePeriod(uint32_t updatePeriod) {
   this->updatePeriod = updatePeriod;
 }
 
-void MQTTIntegerSensor::init(PubSubClient& client, const char* sensorTopic, IntegerUpdateFunction updateFunction) {
-  this->client = &client;
+void MQTTIntegerSensor::init(const char* sensorTopic, IntegerUpdateFunction updateFunction) {
   this->sensorTopic = sensorTopic;
   this->updateFunction = updateFunction;
 }
@@ -49,7 +59,7 @@ void MQTTIntegerSensor::runUpdateFunction() {
   }
 }
 
-void MQTTIntegerSensor::publishIfNew(){
+void MQTTIntegerSensor::publishIfNew() {
   // Check that the value has changed
   if(upcomingValue != currentValue) {
     const char* payload = getPayloadFrom(upcomingValue);
@@ -70,13 +80,23 @@ const char* MQTTIntegerSensor::getPayloadFrom(int newValue) {
 
 
 
+MQTTBinarySensor::MQTTBinarySensor(const char* sensorTopic, BoolUpdateFunction updateFunction) {
+  init(sensorTopic, updateFunction);
+}
+
 MQTTBinarySensor::MQTTBinarySensor(PubSubClient& client, const char* sensorTopic, BoolUpdateFunction updateFunction) {
-  init(client, sensorTopic, updateFunction);
+  init(sensorTopic, updateFunction);
+  setMqttClient(client);
 }
 
 MQTTBinarySensor::MQTTBinarySensor(PubSubClient& client, const char* sensorTopic, BoolUpdateFunction updateFunction, const char* payloadTrue, const char* payloadFalse) {
-  init(client, sensorTopic, updateFunction);
+  init(sensorTopic, updateFunction);
+  setMqttClient(client);
   setPayload(payloadTrue, payloadFalse);
+}
+
+void MQTTBinarySensor::setMqttClient(PubSubClient& client) {
+  this->client = &client;
 }
 
 void MQTTBinarySensor::setPayload(const char* payloadTrue, const char* payloadFalse) {
@@ -84,13 +104,12 @@ void MQTTBinarySensor::setPayload(const char* payloadTrue, const char* payloadFa
   this->payloadFalse = payloadFalse;
 }
 
-void MQTTBinarySensor::init(PubSubClient& client, const char* sensorTopic, BoolUpdateFunction updateFunction) {
-  this->client = &client;
+void MQTTBinarySensor::init(const char* sensorTopic, BoolUpdateFunction updateFunction) {
   this->sensorTopic = sensorTopic;
   this->updateFunction = updateFunction;
 }
 
-void MQTTBinarySensor::loop(){
+void MQTTBinarySensor::loop() {
   runUpdateFunction();
   publishIfNew();
 }
@@ -101,7 +120,7 @@ void MQTTBinarySensor::runUpdateFunction() {
   }
 }
 
-void MQTTBinarySensor::publishIfNew(){
+void MQTTBinarySensor::publishIfNew() {
   // Check that the value has changed
   if(upcomingValue != currentValue) {
     const char* payload = getPayloadFrom(upcomingValue);

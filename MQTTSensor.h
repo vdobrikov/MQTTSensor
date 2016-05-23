@@ -31,14 +31,16 @@ class MQTTIntegerSensor {
     uint32_t updatePeriod = DEFAULT_UPDATE_PERIOD;
     uint32_t lastUpdateTimestamp;
 
-    void init(PubSubClient&, const char*, IntegerUpdateFunction);
+    void init(const char*, IntegerUpdateFunction);
     const char* getPayloadFrom(int);
     void runUpdateFunction();
     void publishIfNew();
 
   public:
+    MQTTIntegerSensor(const char*, IntegerUpdateFunction, uint32_t);
     MQTTIntegerSensor(PubSubClient&, const char*, IntegerUpdateFunction);
     MQTTIntegerSensor(PubSubClient&, const char*, IntegerUpdateFunction, uint32_t);
+    void setMqttClient(PubSubClient&);
     void setUpdatePeriod(uint32_t);
     void loop();
 };
@@ -56,13 +58,15 @@ class MQTTBinarySensor {
     BoolUpdateFunction updateFunction;
 
     const char* getPayloadFrom(bool);
-    void init(PubSubClient&, const char*, BoolUpdateFunction);
+    void init(const char*, BoolUpdateFunction);
     void runUpdateFunction();
     void publishIfNew();
 
   public:
+    MQTTBinarySensor(const char*, BoolUpdateFunction);
     MQTTBinarySensor(PubSubClient&, const char*, BoolUpdateFunction);
     MQTTBinarySensor(PubSubClient&, const char*, BoolUpdateFunction, const char*, const char*);
+    void setMqttClient(PubSubClient&);
     void setPayload(const char*, const char*);
     void loop();
 };
