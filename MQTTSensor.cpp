@@ -6,19 +6,21 @@ MQTTIntegerSensor::MQTTIntegerSensor(const char* sensorTopic, IntegerUpdateFunct
   setUpdatePeriod(updatePeriod);
 }
 
-MQTTIntegerSensor::MQTTIntegerSensor(PubSubClient& client, const char* sensorTopic, IntegerUpdateFunction updateFunction) {
+MQTTIntegerSensor::MQTTIntegerSensor(PubSubClient* client, const char* sensorTopic, IntegerUpdateFunction updateFunction) {
   init(sensorTopic, updateFunction);
   setMqttClient(client);
 }
 
-MQTTIntegerSensor::MQTTIntegerSensor(PubSubClient& client, const char* sensorTopic, IntegerUpdateFunction updateFunction, uint32_t updatePeriod) {
+MQTTIntegerSensor::MQTTIntegerSensor(PubSubClient* client, const char* sensorTopic, IntegerUpdateFunction updateFunction, uint32_t updatePeriod) {
   init(sensorTopic, updateFunction);
   setMqttClient(client);
   setUpdatePeriod(updatePeriod);
 }
 
-void MQTTIntegerSensor::setMqttClient(PubSubClient& client) {
-  this->client = &client;
+void MQTTIntegerSensor::setMqttClient(PubSubClient* client) {
+  this->client = client;
+  MQTTSENSOR_PRINT("MQTT sensor: Setting MQTT client. isConnected = ");
+  MQTTSENSOR_PRINTLN(this->client->connected());
 }
 
 void MQTTIntegerSensor::setUpdatePeriod(uint32_t updatePeriod) {
@@ -38,22 +40,24 @@ void MQTTIntegerSensor::loop(){
 void MQTTIntegerSensor::runUpdateFunction() {
   uint32_t currentTimestamp = millis();
   if (currentTimestamp - lastUpdateTimestamp > updatePeriod) {
-    Serial.print(sensorTopic);
-    Serial.print(" - ");
-    Serial.print(currentTimestamp);
-    Serial.print(" - ");
-    Serial.print(lastUpdateTimestamp);
-    Serial.print(" - ");
-    Serial.println(updatePeriod);
+    MQTTSENSOR_PRINT(sensorTopic);
+    MQTTSENSOR_PRINT(" - ");
+    MQTTSENSOR_PRINT(currentTimestamp);
+    MQTTSENSOR_PRINT(" - ");
+    MQTTSENSOR_PRINT(lastUpdateTimestamp);
+    MQTTSENSOR_PRINT(" - ");
+    MQTTSENSOR_PRINTLN(updatePeriod);
     if (updateFunction) {
       // Get the value from the update function
       int tmpUpcomingValue = updateFunction();
-      // If a valid values was returned, round it, check it's new and then publish it
-      if (!isnan(tmpUpcomingValue)) {
-        Serial.print("upcomingValue = ");
-        Serial.println(tmpUpcomingValue);
+      // If a valid values was returned, check it's new and then publish it
+      if (tmpUpcomingValue != NULL) {
+        MQTTSENSOR_PRINT("upcomingValue = ");
+        MQTTSENSOR_PRINTLN(tmpUpcomingValue);
 	    upcomingValue = tmpUpcomingValue;
         lastUpdateTimestamp = currentTimestamp;
+      } else {
+        MQTTSENSOR_PRINTLN("Skipping NULL upcoming value");
       }
     }
   }
@@ -63,10 +67,10 @@ void MQTTIntegerSensor::publishIfNew() {
   // Check that the value has changed
   if(upcomingValue != currentValue) {
     const char* payload = getPayloadFrom(upcomingValue);
-    Serial.print("Publishing ");
-    Serial.print(sensorTopic);
-    Serial.print(" ");
-    Serial.println(payload);
+    MQTTSENSOR_PRINT("Publishing ");
+    MQTTSENSOR_PRINT(sensorTopic);
+    MQTTSENSOR_PRINT(" ");
+    MQTTSENSOR_PRINTLN(payload);
     client->publish(sensorTopic, payload);
     currentValue = upcomingValue;
   }
@@ -84,19 +88,24 @@ MQTTBinarySensor::MQTTBinarySensor(const char* sensorTopic, BoolUpdateFunction u
   init(sensorTopic, updateFunction);
 }
 
-MQTTBinarySensor::MQTTBinarySensor(PubSubClient& client, const char* sensorTopic, BoolUpdateFunction updateFunction) {
+MQTTBinarySensor::MQTTBinarySensor(PubSubClient* client, const char* sensorTopic, BoolUpdateFunction updateFunction) {
   init(sensorTopic, updateFunction);
   setMqttClient(client);
 }
 
-MQTTBinarySensor::MQTTBinarySensor(PubSubClient& client, const char* sensorTopic, BoolUpdateFunction updateFunction, const char* payloadTrue, const char* payloadFalse) {
+MQTTBinarySensor::MQTTBinarySensor(const char* sensorTopic, BoolUpdateFunction updateFunction, const char* payloadTrue, const char* payloadFalse) {
+  init(sensorTopic, updateFunction);
+  setPayload(payloadTrue, payloadFalse);
+}
+
+MQTTBinarySensor::MQTTBinarySensor(PubSubClient* client, const char* sensorTopic, BoolUpdateFunction updateFunction, const char* payloadTrue, const char* payloadFalse) {
   init(sensorTopic, updateFunction);
   setMqttClient(client);
   setPayload(payloadTrue, payloadFalse);
 }
 
-void MQTTBinarySensor::setMqttClient(PubSubClient& client) {
-  this->client = &client;
+void MQTTBinarySensor::setMqttClient(PubSubClient* client) {
+  this->client = client;
 }
 
 void MQTTBinarySensor::setPayload(const char* payloadTrue, const char* payloadFalse) {

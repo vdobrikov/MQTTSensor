@@ -1,9 +1,22 @@
+
+//TODO: Refactor with generic
+
 #ifndef MQTTSensor_H
 #define MQTTSensor_H
 
 #include <arduino.h>
-#include <functional>
+//#include <functional>
 #include "PubSubClient.h"
+
+#define MQTTSENSOR_DEBUG
+
+#if defined(MQTTSENSOR_DEBUG)
+#define MQTTSENSOR_PRINT(str) Serial.print(str)
+#define MQTTSENSOR_PRINTLN(str) Serial.println(str)
+#else
+#define MQTTSENSOR_PRINT(str)
+#define MQTTSENSOR_PRINTLN(str)
+#endif
 
 // Forward definition
 class MQTTIntegerSensor;
@@ -15,8 +28,10 @@ class MQTTBinarySensor;
 #define DEFAULT_PAYLOAD_FALSE "OFF"
 
 // Define callback types
-typedef std::function<int(void)> IntegerUpdateFunction;
-typedef std::function<bool(void)> BoolUpdateFunction;
+//typedef std::function<int(void)> IntegerUpdateFunction;
+//typedef std::function<bool(void)> BoolUpdateFunction;
+typedef int (*IntegerUpdateFunction)();
+typedef bool (*BoolUpdateFunction)();
 
 // Class definition
 class MQTTIntegerSensor {
@@ -38,9 +53,9 @@ class MQTTIntegerSensor {
 
   public:
     MQTTIntegerSensor(const char*, IntegerUpdateFunction, uint32_t);
-    MQTTIntegerSensor(PubSubClient&, const char*, IntegerUpdateFunction);
-    MQTTIntegerSensor(PubSubClient&, const char*, IntegerUpdateFunction, uint32_t);
-    void setMqttClient(PubSubClient&);
+    MQTTIntegerSensor(PubSubClient*, const char*, IntegerUpdateFunction);
+    MQTTIntegerSensor(PubSubClient*, const char*, IntegerUpdateFunction, uint32_t);
+    void setMqttClient(PubSubClient*);
     void setUpdatePeriod(uint32_t);
     void loop();
 };
@@ -64,9 +79,10 @@ class MQTTBinarySensor {
 
   public:
     MQTTBinarySensor(const char*, BoolUpdateFunction);
-    MQTTBinarySensor(PubSubClient&, const char*, BoolUpdateFunction);
-    MQTTBinarySensor(PubSubClient&, const char*, BoolUpdateFunction, const char*, const char*);
-    void setMqttClient(PubSubClient&);
+    MQTTBinarySensor(PubSubClient*, const char*, BoolUpdateFunction);
+    MQTTBinarySensor(const char*, BoolUpdateFunction, const char*, const char*);
+    MQTTBinarySensor(PubSubClient*, const char*, BoolUpdateFunction, const char*, const char*);
+    void setMqttClient(PubSubClient*);
     void setPayload(const char*, const char*);
     void loop();
 };
