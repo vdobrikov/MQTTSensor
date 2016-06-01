@@ -24,8 +24,12 @@ class MQTTBinarySensor;
 
 #define PAYLOAD_STRING_MAX_LENGTH 10
 #define DEFAULT_UPDATE_PERIOD 1000
+
 #define DEFAULT_PAYLOAD_TRUE "ON"
 #define DEFAULT_PAYLOAD_FALSE "OFF"
+
+#define DEFAULT_PAYLOAD_ALARM "ALARM"
+#define DEFAULT_COOLDOWN_TIME_MS 5000;
 
 // Define callback types
 //typedef std::function<int(void)> IntegerUpdateFunction;
@@ -84,6 +88,28 @@ class MQTTBinarySensor {
     MQTTBinarySensor(PubSubClient*, const char*, BoolUpdateFunction, const char*, const char*);
     void setMqttClient(PubSubClient*);
     void setPayload(const char*, const char*);
+    void loop();
+};
+
+
+class MQTTAlarmSensor {
+  private:
+    PubSubClient* client;
+    const char* sensorTopic;
+    const char* payload = DEFAULT_PAYLOAD_ALARM;
+    bool triggered = false;
+    uint32_t lastTriggeredTimestamp = 0;
+    int cooldownTimeMs = DEFAULT_COOLDOWN_TIME_MS;
+
+    void publishIfTriggered();
+
+  public:
+    MQTTAlarmSensor(const char*);
+    MQTTAlarmSensor(const char*, const char*);
+    void setMqttClient(PubSubClient*);
+    void setPayload(const char*);
+    bool isTriggered();
+    void trigger();
     void loop();
 };
 

@@ -145,3 +145,51 @@ const char* MQTTBinarySensor::getPayloadFrom(bool newState) {
     return payloadFalse;
   }
 }
+
+
+
+
+MQTTAlarmSensor::MQTTAlarmSensor(const char* sensorTopic) {
+  this->sensorTopic = sensorTopic;
+}
+
+MQTTAlarmSensor::MQTTAlarmSensor(const char* sensorTopic, const char* payload) :
+  MQTTAlarmSensor(sensorTopic) {
+  setPayload(payload);
+}
+
+void MQTTAlarmSensor::setMqttClient(PubSubClient* client) {
+  this->client = client;
+}
+
+void MQTTAlarmSensor::setPayload(const char* payload) {
+  this->payload = payload;
+}
+
+bool MQTTAlarmSensor::isTriggered() {
+  return triggered;
+}
+
+void MQTTAlarmSensor::trigger() {
+  uint32_t now = millis();
+  if (now - lastTriggeredTimestamp < cooldownTimeMs) {
+    return;
+  }
+  lastTriggeredTimestamp = now;
+  triggered = true;
+}
+
+void MQTTAlarmSensor::loop() {
+  publishIfTriggered();
+}
+
+void MQTTAlarmSensor::publishIfTriggered() {
+  if(triggered) {
+    MQTTSENSOR_PRINT("Publishing ");
+    MQTTSENSOR_PRINT(sensorTopic);
+    MQTTSENSOR_PRINT(" ");
+    MQTTSENSOR_PRINTLN(payload);
+    triggered = false;
+    client->publish(sensorTopic, payload);
+  }
+}
